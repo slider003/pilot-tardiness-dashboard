@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LevoAir | Pilot Tardiness Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        levoBlue: '#0066FF',
+                        levoDark: '#0A192F',
+                        levoGreen: '#00E676',
+                        levoYellow: '#FFC400',
+                        levoRed: '#FF3D00',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #e2e8f0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .glow-red {
+            box-shadow: 0 0 15px rgba(255, 61, 0, 0.5);
+        }
+        
+        .glow-yellow {
+            box-shadow: 0 0 15px rgba(255, 196, 0, 0.5);
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .slide-up {
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-levoDark text-white shadow-sm">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-drone-alt text-2xl text-levoBlue"></i>
+                    <h1 class="text-xl font-bold">LevoAir</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <i class="fas fa-bell text-gray-300 hover:text-white cursor-pointer"></i>
+                        <span class="absolute -top-1 -right-1 h-3 w-3 bg-levoRed rounded-full"></span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-medium">Admin</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-8">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">Pilot Tardiness Dashboard</h2>
+                <div class="flex space-x-2">
+                    <button class="px-4 py-2 bg-levoBlue text-white rounded-md hover:bg-blue-700 transition">
+                        <i class="fas fa-plus mr-2"></i> Add Pilot
+                    </button>
+                    <button class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition">
+                        <i class="fas fa-filter mr-2"></i> Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow p-6 card-hover transition">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-500 text-sm font-medium">Total Pilots</p>
+                            <h3 class="text-2xl font-bold mt-1" id="totalPilots">2</h3>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i class="fas fa-users text-levoBlue"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow p-6 card-hover transition">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-500 text-sm font-medium">On-Time Pilots</p>
+                            <h3 class="text-2xl font-bold mt-1" id="onTimePilots">1</h3>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full">
+                            <i class="fas fa-check-circle text-levoGreen"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow p-6 card-hover transition">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-500 text-sm font-medium">Warning Pilots</p>
+                            <h3 class="text-2xl font-bold mt-1" id="warningPilots">1</h3>
+                        </div>
+                        <div class="bg-yellow-100 p-3 rounded-full">
+                            <i class="fas fa-exclamation-triangle text-levoYellow"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow p-6 card-hover transition">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-500 text-sm font-medium">Terminated Pilots</p>
+                            <h3 class="text-2xl font-bold mt-1" id="terminatedPilots">0</h3>
+                        </div>
+                        <div class="bg-red-100 p-3 rounded-full">
+                            <i class="fas fa-skull-crossbones text-levoRed"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Dashboard -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800">Pilot Tardiness Quota</h3>
+                        <p class="text-sm text-gray-500">Each pilot gets <span id="globalQuotaValue">5</span> late arrivals before termination</p>
+                    </div>
+                    <button onclick="showQuotaModal()" class="text-levoBlue hover:text-blue-700 text-sm font-medium">
+                        <i class="fas fa-cog mr-1"></i> Change Global Quota
+                    </button>
+                </div>
+                
+                <div class="divide-y divide-gray-200" id="pilotsList">
+                    <!-- Pilot 1 - Warning -->
+                    <div class="p-6 hover:bg-gray-50 transition flex flex-col md:flex-row md:items-center md:justify-between" id="pilot-LV-5123">
+                        <div class="flex items-center space-x-4 mb-4 md:mb-0">
+                            <div class="relative">
+                                <span class="absolute -bottom-1 -right-1 h-4 w-4 bg-levoYellow rounded-full border-2 border-white"></span>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-800">Nathanael Scott</h4>
+                                <p class="text-sm text-gray-500">Pilot ID: LV-5123</p>
+                            </div>
+                        </div>
+                        
+                        <div class="w-full md:w-1/2">
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm font-medium text-levoYellow">3/5 Late Arrivals</span>
+                                <span class="text-sm font-medium text-levoYellow">WARNING</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-levoYellow" style="width: 60%"></div>
+                            </div>
+                            <p class="text-xs text-levoYellow mt-2 font-medium">
+                                <i class="fas fa-exclamation-triangle mr-1"></i> Approaching termination threshold
+                            </p>
+                        </div>
+                        
+                        <div class="mt-4 md:mt-0 flex space-x-2">
+                            <button onclick="showTerminationModal('Nathanael Scott', 'LV-5123')" class="px-3 py-1.5 bg-red-100 text-levoRed rounded-md text-sm hover:bg-red-200 transition flex items-center">
+                                <i class="fas fa-user-slash mr-1 text-xs"></i> Terminate
+                            </button>
+                            <button onclick="resetQuota('Nathanael Scott', 'LV-5123')" class="px-3 py-1.5 bg-blue-100 text-levoBlue rounded-md text-sm hover:bg-blue-200 transition flex items-center">
+                                <i class="fas fa-redo mr-1 text-xs"></i> Reset Quota
+                            </button>
+                            <button onclick="showCustomQuotaModal('Nathanael Scott', 'LV-5123', 3, 5)" class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition flex items-center">
+                                <i class="fas fa-pencil-alt mr-1 text-xs"></i> Custom
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Pilot 2 - Good -->
+                    <div class="p-6 hover:bg-gray-50 transition flex flex-col md:flex-row md:items-center md:justify-between" id="pilot-LV-1984">
+                        <div class="flex items-center space-x-4 mb-4 md:mb-0">
+                            <div class="relative">
+                                <span class="absolute -bottom-1 -right-1 h-4 w-4 bg-levoGreen rounded-full border-2 border-white"></span>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-800">Matthew Coleman</h4>
+                                <p class="text-sm text-gray-500">Pilot ID: LV-1984</p>
+                            </div>
+                        </div>
+                        
+                        <div class="w-full md:w-1/2">
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm font-medium text-gray-600">0/5 Late Arrivals</span>
+                                <span class="text-sm font-medium text-gray-600">GOOD STANDING</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-green-300" style="width: 0%"></div>
+                            </div>
+                            <p class="text-xs text-green-500 mt-2">
+                                <i class="fas fa-check-circle mr-1"></i> Within acceptable tardiness limits
+                            </p>
+                        </div>
+                        
+                        <div class="mt-4 md:mt-0 flex space-x-2">
+                            <button onclick="showTerminationModal('Matthew Coleman', 'LV-1984')" class="px-3 py-1.5 bg-red-100 text-levoRed rounded-md text-sm hover:bg-red-200 transition flex items-center">
+                                <i class="fas fa-user-slash mr-1 text-xs"></i> Terminate
+                            </button>
+                            <button onclick="resetQuota('Matthew Coleman', 'LV-1984')" class="px-3 py-1.5 bg-blue-100 text-levoBlue rounded-md text-sm hover:bg-blue-200 transition flex items-center">
+                                <i class="fas fa-redo mr-1 text-xs"></i> Reset Quota
+                            </button>
+                            <button onclick="showCustomQuotaModal('Matthew Coleman', 'LV-1984', 0, 5)" class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition flex items-center">
+                                <i class="fas fa-pencil-alt mr-1 text-xs"></i> Custom
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="px-6 py-4 bg-gray-50 flex justify-between items-center">
+                    <p class="text-sm text-gray-500">Showing <span id="showingPilots">2</span> of <span id="totalPilotsBottom">2</span> pilots</p>
+                    <button class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition">
+                        View All Pilots
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Termination Modal -->
+            <div id="terminationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                <div class="bg-white rounded-lg shadow-xl max-w-md w-full fade-in">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800">Terminate Pilot</h3>
+                                <p class="text-gray-600 mt-2">Are you sure you want to terminate <span id="pilotName" class="font-medium"></span> (<span id="pilotId" class="font-mono"></span>)?</p>
+                            </div>
+                            <button onclick="hideTerminationModal()" class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="mt-6 bg-red-50 border border-red-200 rounded-md p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-circle text-red-400"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-red-800">This action cannot be undone</h3>
+                                    <div class="mt-2 text-sm text-red-700">
+                                        <p>All future shifts will be canceled and access will be revoked immediately.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <button onclick="hideTerminationModal()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition">
+                                Cancel
+                            </button>
+                            <button onclick="confirmTermination()" class="px-4 py-2 bg-levoRed text-white rounded-md hover:bg-red-700 transition">
+                                Confirm Termination
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quota Settings Modal -->
+            <div id="quotaModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                <div class="bg-white rounded-lg shadow-xl max-w-md w-full fade-in">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800">Set Global Quota</h3>
+                                <p class="text-gray-600 mt-2">Set the maximum number of late arrivals allowed before termination.</p>
+                            </div>
+                            <button onclick="hideQuotaModal()" class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <label for="quotaInput" class="block text-sm font-medium text-gray-700 mb-1">Late Arrivals Quota</label>
+                            <input type="number" id="quotaInput" min="1" max="20" value="5" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-levoBlue focus:border-levoBlue">
+                        </div>
+                        
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <button onclick="hideQuotaModal()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition">
+                                Cancel
+                            </button>
+                            <button onclick="updateGlobalQuota()" class="px-4 py-2 bg-levoBlue text-white rounded-md hover:bg-blue-700 transition">
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Custom Quota Modal -->
+            <div id="customQuotaModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                <div class="bg-white rounded-lg shadow-xl max-w-md w-full fade-in">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800">Set Custom Quota</h3>
+                                <p class="text-gray-600 mt-2">Set custom late arrival values for <span id="customPilotName" class="font-medium"></span> (<span id="customPilotId" class="font-mono"></span>).</p>
+                            </div>
+                            <button onclick="hideCustomQuotaModal()" class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="mt-6 grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="currentLateInput" class="block text-sm font-medium text-gray-700 mb-1">Current Late Arrivals</label>
+                                <input type="number" id="currentLateInput" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-levoBlue focus:border-levoBlue">
+                            </div>
+                            <div>
+                                <label for="maxLateInput" class="block text-sm font-medium text-gray-700 mb-1">Max Allowed</label>
+                                <input type="number" id="maxLateInput" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-levoBlue focus:border-levoBlue">
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <button onclick="hideCustomQuotaModal()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition">
+                                Cancel
+                            </button>
+                            <button onclick="updateCustomQuota()" class="px-4 py-2 bg-levoBlue text-white rounded-md hover:bg-blue-700 transition">
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Success Notification -->
+            <div id="successNotification" class="fixed top-4 right-4 bg-green-500 text-white px-4 py-3 rounded-md shadow-lg hidden z-50 fade-in slide-up">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        <span id="successMessage"></span>
+                    </div>
+                    <button onclick="hideSuccessNotification()" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Undo Notification -->
+            <div id="undoNotification" class="fixed top-4 right-4 bg-blue-500 text-white px-4 py-3 rounded-md shadow-lg hidden z-50 fade-in slide-up">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span id="undoMessage"></span>
+                    </div>
+                    <div class="ml-4 flex space-x-2">
+                        <button onclick="undoLastAction()" class="px-2 py-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded text-sm">
+                            Undo
+                        </button>
+                        <button onclick="hideUndoNotification()" class="px-2 py-1 hover:bg-white hover:bg-opacity-20 rounded">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Global variables
+        let currentPilotName = '';
+        let currentPilotId = '';
+        let currentPilotElement = null;
+        let actionHistory = [];
+        let globalQuota = 5;
+        let pilots = [
+            {
+                id: 'LV-5123',
+                name: 'Nathanael Scott',
+                lateArrivals: 3,
+                maxLateArrivals: 5,
+                status: 'warning',
+                terminated: false
+            },
+            {
+                id: 'LV-1984',
+                name: 'Matthew Coleman',
+                lateArrivals: 0,
+                maxLateArrivals: 5,
+                status: 'good',
+                terminated: false
+            }
+        ];
+        
+        // Initialize the dashboard
+        function initDashboard() {
+            updateStats();
+            updatePilotsList();
+        }
+        
+        // Update statistics counters
+        function updateStats() {
+            const totalPilots = pilots.length;
+            const onTimePilots = pilots.filter(p => !p.terminated && p.status === 'good').length;
+            const warningPilots = pilots.filter(p => !p.terminated && p.status === 'warning').length;
+            const terminatedPilots = pilots.filter(p => p.terminated).length;
+            
+            document.getElementById('totalPilots').textContent = totalPilots;
+            document.getElementById('onTimePilots').textContent = onTimePilots;
+            document.getElementById('warningPilots').textContent = warningPilots;
+            document.getElementById('terminatedPilots').textContent = terminatedPilots;
+            document.getElementById('totalPilotsBottom').textContent = totalPilots;
+            document.getElementById('showingPilots').textContent = totalPilots;
+            document.getElementById('globalQuotaValue').textContent = globalQuota;
+        }
+        
+        // Update the pilots list display
+        function updatePilotsList() {
+            const pilotsList = document.getElementById('pilotsList');
+            pilotsList.innerHTML = '';
+            
+            pilots.forEach(pilot => {
+                const pilotElement = createPilotElement(pilot);
+                pilotsList.appendChild(pilotElement);
+            });
+        }
+        
+        // Create a pilot element
+        function createPilotElement(pilot) {
+            const element = document.createElement('div');
+            element.className = `p-6 hover:bg-gray-50 transition flex flex-col md:flex-row md:items-center md:justify-between ${pilot.terminated ? 'bg-gray-100' : ''}`;
+            element.id = `pilot-${pilot.id}`;
+            
+            // Status indicator color
+            let statusColor = 'bg-gray-400';
+            let statusTextColor = 'text-gray-600';
+            let progressColor = 'bg-gray-300';
+            let statusText = 'INACTIVE';
+            
+            if (pilot.terminated) {
+                statusColor = 'bg-gray-400';
+                statusText = 'TERMINATED';
+            } else if (pilot.status === 'good') {
+                statusColor = 'bg-levoGreen';
+                statusTextColor = 'text-green-600';
+                progressColor = 'bg-green-300';
+                statusText = 'GOOD STANDING';
+            } else if (pilot.status === 'warning') {
+                statusColor = 'bg-levoYellow';
+                statusTextColor = 'text-levoYellow';
+                progressColor = 'bg-levoYellow';
+                statusText = 'WARNING';
+            }
+            
+            // Calculate progress percentage
+            const progressPercentage = (pilot.lateArrivals / pilot.maxLateArrivals) * 100;
+            
+            element.innerHTML = `
+                <div class="flex items-center space-x-4 mb-4 md:mb-0">
+                    <div class="relative">
+                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(pilot.name)}&background=random" class="h-10 w-10 rounded-full">
+                        <span class="absolute -bottom-1 -right-1 h-4 w-4 ${statusColor} rounded-full border-2 border-white"></span>
+                    </div>
+                    <div>
+                        <h4 class="font-medium ${pilot.terminated ? 'text-gray-500' : 'text-gray-800'}">${pilot.name}</h4>
+                        <p class="text-sm ${pilot.terminated ? 'text-gray-400' : 'text-gray-500'}">Pilot ID: ${pilot.id}</p>
+                    </div>
+                </div>
+                
+                <div class="w-full md:w-1/2">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-sm font-medium ${pilot.terminated ? 'text-gray-500' : statusTextColor}">${pilot.lateArrivals}/${pilot.maxLateArrivals} Late Arrivals</span>
+                        <span class="text-sm font-medium ${pilot.terminated ? 'text-gray-500' : statusTextColor}">${statusText}</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill ${progressColor}" style="width: ${progressPercentage}%"></div>
+                    </div>
+                    ${pilot.terminated ? 
+                        `<p class="text-xs text-gray-500 mt-2 font-medium">
+                            <i class="fas fa-ban mr-1"></i> Pilot account terminated
+                        </p>` : 
+                        (pilot.status === 'warning' ? 
+                            `<p class="text-xs text-levoYellow mt-2 font-medium">
+                                <i class="fas fa-exclamation-triangle mr-1"></i> Approaching termination threshold
+                            </p>` : 
+                            `<p class="text-xs text-green-500 mt-2">
+                                <i class="fas fa-check-circle mr-1"></i> Within acceptable tardiness limits
+                            </p>`)
+                    }
+                </div>
+                
+                <div class="mt-4 md:mt-0 flex space-x-2">
+                    ${pilot.terminated ? 
+                        `<button onclick="undoTermination('${pilot.name}', '${pilot.id}')" class="px-3 py-1.5 bg-blue-100 text-levoBlue rounded-md text-sm hover:bg-blue-200 transition flex items-center">
+                            <i class="fas fa-undo mr-1 text-xs"></i> Reinstate
+                        </button>` : 
+                        `<button onclick="showTerminationModal('${pilot.name}', '${pilot.id}')" class="px-3 py-1.5 bg-red-100 text-levoRed rounded-md text-sm hover:bg-red-200 transition flex items-center">
+                            <i class="fas fa-user-slash mr-1 text-xs"></i> Terminate
+                        </button>
+                        <button onclick="resetQuota('${pilot.name}', '${pilot.id}')" class="px-3 py-1.5 bg-blue-100 text-levoBlue rounded-md text-sm hover:bg-blue-200 transition flex items-center">
+                            <i class="fas fa-redo mr-1 text-xs"></i> Reset Quota
+                        </button>
+                        <button onclick="showCustomQuotaModal('${pilot.name}', '${pilot.id}', ${pilot.lateArrivals}, ${pilot.maxLateArrivals})" class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition flex items-center">
+                            <i class="fas fa-pencil-alt mr-1 text-xs"></i> Custom
+                        </button>`
+                    }
+                </div>
+            `;
+            
+            return element;
+        }
+        
+        // Show termination modal
+        function showTerminationModal(name, id) {
+            currentPilotName = name;
+            currentPilotId = id;
+            currentPilotElement = document.getElementById(`pilot-${id}`);
+            
+            document.getElementById('pilotName').textContent = name;
+            document.getElementById('pilotId').textContent = id;
+            document.getElementById('terminationModal').classList.remove('hidden');
+        }
+        
+        // Hide termination modal
+        function hideTerminationModal() {
+            document.getElementById('terminationModal').classList.add('hidden');
+        }
+        
+        // Confirm termination
+        function confirmTermination() {
+            hideTerminationModal();
+            
+            // Find the pilot
+            const pilotIndex = pilots.findIndex(p => p.id === currentPilotId);
+            if (pilotIndex !== -1) {
+                // Save state for undo
+                actionHistory.push({
+                    type: 'termination',
+                    pilot: {...pilots[pilotIndex]},
+                    timestamp: new Date()
+                });
+                
+                // Update pilot status
+                pilots[pilotIndex].terminated = true;
+                
+                // Update UI
+                updateStats();
+                updatePilotsList();
+                
+                // Show success and undo notifications
+                showSuccessNotification(`${currentPilotName} has been terminated.`);
+                showUndoNotification(`Pilot ${currentPilotName} terminated.`);
+            }
+        }
+        
+        // Undo termination
+        function undoTermination(name, id) {
+            const pilotIndex = pilots.findIndex(p => p.id === id);
+            if (pilotIndex !== -1) {
+                pilots[pilotIndex].terminated = false;
+                
+                // Recalculate status
+                const pilot = pilots[pilotIndex];
+                pilot.status = pilot.lateArrivals >= pilot.maxLateArrivals * 0.6 ? 'warning' : 'good';
+                
+                updateStats();
+                updatePilotsList();
+                
+                showSuccessNotification(`${name} has been reinstated.`);
+            }
+        }
+        
+        // Reset quota for a pilot
+        function resetQuota(name, id) {
+            const pilotIndex = pilots.findIndex(p => p.id === id);
+            if (pilotIndex !== -1) {
+                // Save state for undo
+                actionHistory.push({
+                    type: 'quotaReset',
+                    pilot: {...pilots[pilotIndex]},
+                    timestamp: new Date()
+                });
+                
+                // Reset late arrivals
+                pilots[pilotIndex].lateArrivals = 0;
+                pilots[pilotIndex].status = 'good';
+                
+                updateStats();
+                updatePilotsList();
+                
+                showSuccessNotification(`Quota reset for ${name}.`);
+                showUndoNotification(`Quota reset for ${name}.`);
+            }
+        }
+        
+        // Show quota settings modal
+        function showQuotaModal() {
+            document.getElementById('quotaInput').value = globalQuota;
+            document.getElementById('quotaModal').classList.remove('hidden');
+        }
+        
+        // Hide quota settings modal
+        function hideQuotaModal() {
+            document.getElementById('quotaModal').classList.add('hidden');
+        }
+        
+        // Update global quota
+        function updateGlobalQuota() {
+            const newQuota = parseInt(document.getElementById('quotaInput').value);
+            
+            if (newQuota >= 1 && newQuota <= 20) {
+                // Save state for undo
+                actionHistory.push({
+                    type: 'globalQuotaChange',
+                    previousQuota: globalQuota,
+                    timestamp: new Date()
+                });
+                
+                globalQuota = newQuota;
+                
+                // Update all pilots' maxLateArrivals
+                pilots.forEach(pilot => {
+                    if (!pilot.terminated) {
+                        pilot.maxLateArrivals = globalQuota;
+                        // Recalculate status
+                        pilot.status = pilot.lateArrivals >= globalQuota * 0.6 ? 'warning' : 'good';
+                    }
+                });
+                
+                hideQuotaModal();
+                updateStats();
+                updatePilotsList();
+                
+                showSuccessNotification(`Global quota updated to ${globalQuota}.`);
+                showUndoNotification(`Global quota changed to ${globalQuota}.`);
+            } else {
+                alert('Please enter a valid number between 1 and 20');
+            }
+        }
+        
+        // Show custom quota modal
+        function showCustomQuotaModal(name, id, currentLate, maxLate) {
+            currentPilotName = name;
+            currentPilotId = id;
+            
+            document.getElementById('customPilotName').textContent = name;
+            document.getElementById('customPilotId').textContent = id;
+            document.getElementById('currentLateInput').value = currentLate;
+            document.getElementById('maxLateInput').value = maxLate;
+            document.getElementById('customQuotaModal').classList.remove('hidden');
+        }
+        
+        // Hide custom quota modal
+        function hideCustomQuotaModal() {
+            document.getElementById('customQuotaModal').classList.add('hidden');
+        }
+        
+        // Update custom quota for a pilot
+        function updateCustomQuota() {
+            const currentLate = parseInt(document.getElementById('currentLateInput').value);
+            const maxLate = parseInt(document.getElementById('maxLateInput').value);
+            
+            if (currentLate >= 0 && maxLate >= 1 && currentLate <= maxLate) {
+                const pilotIndex = pilots.findIndex(p => p.id === currentPilotId);
+                if (pilotIndex !== -1) {
+                    // Save state for undo
+                    actionHistory.push({
+                        type: 'customQuota',
+                        pilot: {...pilots[pilotIndex]},
+                        timestamp: new Date()
+                    });
+                    
+                    // Update pilot's values
+                    pilots[pilotIndex].lateArrivals = currentLate;
+                    pilots[pilotIndex].maxLateArrivals = maxLate;
+                    pilots[pilotIndex].status = currentLate >= maxLate * 0.6 ? 'warning' : 'good';
+                    
+                    hideCustomQuotaModal();
+                    updateStats();
+                    updatePilotsList();
+                    
+                    showSuccessNotification(`Custom quota set for ${currentPilotName}.`);
+                    showUndoNotification(`Custom quota set for ${currentPilotName}.`);
+                }
+            } else {
+                alert('Please enter valid numbers (current >= 0, max >= 1, current <= max)');
+            }
+        }
+        
+        // Show success notification
+        function showSuccessNotification(message) {
+            const notification = document.getElementById('successNotification');
+            document.getElementById('successMessage').textContent = message;
+            notification.classList.remove('hidden');
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                if (!notification.classList.contains('hidden')) {
+                    notification.classList.add('hidden');
+                }
+            }, 3000);
+        }
+        
+        // Hide success notification
+        function hideSuccessNotification() {
+            document.getElementById('successNotification').classList.add('hidden');
+        }
+        
+        // Show undo notification
+        function showUndoNotification(message) {
+            const notification = document.getElementById('undoNotification');
+            document.getElementById('undoMessage').textContent = message;
+            notification.classList.remove('hidden');
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                if (!notification.classList.contains('hidden')) {
+                    notification.classList.add('hidden');
+                }
+            }, 5000);
+        }
+        
+        // Hide undo notification
+        function hideUndoNotification() {
+            document.getElementById('undoNotification').classList.add('hidden');
+        }
+        
+        // Undo last action
+        function undoLastAction() {
+            if (actionHistory.length > 0) {
+                const lastAction = actionHistory.pop();
+                
+                if (lastAction.type === 'termination' || lastAction.type === 'quotaReset' || lastAction.type === 'customQuota') {
+                    // Find the pilot and restore previous state
+                    const pilotIndex = pilots.findIndex(p => p.id === lastAction.pilot.id);
+                    if (pilotIndex !== -1) {
+                        pilots[pilotIndex] = lastAction.pilot;
+                    }
+                } else if (lastAction.type === 'globalQuotaChange') {
+                    // Restore previous global quota
+                    globalQuota = lastAction.previousQuota;
+                    
+                    // Update all pilots' maxLateArrivals
+                    pilots.forEach(pilot => {
+                        if (!pilot.terminated) {
+                            pilot.maxLateArrivals = globalQuota;
+                            // Recalculate status
+                            pilot.status = pilot.lateArrivals >= globalQuota * 0.6 ? 'warning' : 'good';
+                        }
+                    });
+                }
+                
+                updateStats();
+                updatePilotsList();
+                hideUndoNotification();
+                showSuccessNotification('Last action undone.');
+            }
+        }
+        
+        // Initialize the dashboard when the page loads
+        window.onload = initDashboard;
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - 🧬 <a href="https://enzostvs-deepsite.hf.space?remix=mncole003/pilot-tardiness-dashboard" style="color: #fff;text-decoration: underline;" target="_blank" >Remix</a></p></body>
+</html>
