@@ -195,9 +195,34 @@
     </header>
 
     <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
+        <div class="mb-8 flex justify-end">
+            <button id="addPilotBtn" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-5 rounded-lg shadow transition-all duration-200">
+                <i class="ph-plus mr-2"></i>Add Pilot
+            </button>
+        </div>
+        <div id="pilotList" class="mb-10"></div>
         <div id="commandGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
-            </div>
+        </div>
     </main>
+
+    <!-- Add Pilot Modal -->
+    <div id="addPilotModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-slate-800 rounded-xl p-8 w-full max-w-md shadow-2xl relative">
+            <button id="closePilotModal" class="absolute top-3 right-3 text-slate-400 hover:text-sky-400 text-2xl"><i class="ph-x"></i></button>
+            <h2 class="text-xl font-bold text-sky-400 mb-4">Add Pilot</h2>
+            <form id="pilotForm" class="space-y-4">
+                <div>
+                    <label class="block text-slate-300 mb-1" for="pilotName">Name</label>
+                    <input id="pilotName" name="pilotName" type="text" required class="w-full px-3 py-2 rounded bg-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+                </div>
+                <div>
+                    <label class="block text-slate-300 mb-1" for="pilotRank">Rank</label>
+                    <input id="pilotRank" name="pilotRank" type="text" required class="w-full px-3 py-2 rounded bg-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+                </div>
+                <button type="submit" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg w-full transition-all">Add</button>
+            </form>
+        </div>
+    </div>
 
     <button id="scrollToTopBtn" title="Go to top">
         <i class="ph-arrow-up"></i>
@@ -483,6 +508,42 @@
             observer.observe(card);
         });
 
+        // Add Pilot functionality
+        const addPilotBtn = document.getElementById('addPilotBtn');
+        const addPilotModal = document.getElementById('addPilotModal');
+        const closePilotModal = document.getElementById('closePilotModal');
+        const pilotForm = document.getElementById('pilotForm');
+        const pilotList = document.getElementById('pilotList');
+        let pilots = [];
+
+        addPilotBtn.addEventListener('click', () => {
+            addPilotModal.classList.remove('hidden');
+        });
+        closePilotModal.addEventListener('click', () => {
+            addPilotModal.classList.add('hidden');
+        });
+        addPilotModal.addEventListener('click', (e) => {
+            if (e.target === addPilotModal) addPilotModal.classList.add('hidden');
+        });
+        pilotForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('pilotName').value.trim();
+            const rank = document.getElementById('pilotRank').value.trim();
+            if (name && rank) {
+                pilots.push({ name, rank });
+                renderPilots();
+                pilotForm.reset();
+                addPilotModal.classList.add('hidden');
+            }
+        });
+        function renderPilots() {
+            if (pilots.length === 0) {
+                pilotList.innerHTML = '';
+                return;
+            }
+            pilotList.innerHTML = `<h3 class="text-lg font-bold text-sky-400 mb-2">Pilots</h3><ul class="space-y-2">` +
+                pilots.map(p => `<li class="bg-slate-700 rounded px-4 py-2 flex justify-between items-center text-slate-200"><span><strong>${p.name}</strong> <span class='text-sky-400'>(${p.rank})</span></span></li>`).join('') + '</ul>';
+        }
     </script>
 </body>
 </html>
