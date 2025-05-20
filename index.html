@@ -112,7 +112,7 @@
             <div class="flex justify-between items-center mb-8">
                 <h2 class="text-2xl font-bold text-gray-800">Pilot Tardiness Dashboard</h2>
                 <div class="flex space-x-2">
-                    <button class="px-4 py-2 bg-levoBlue text-white rounded-md hover:bg-blue-700 transition">
+                    <button class="px-4 py-2 bg-levoBlue text-white rounded-md hover:bg-blue-700 transition" onclick="showAddPilotModal()">
                         <i class="fas fa-plus mr-2"></i> Add Pilot
                     </button>
                     <button class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition">
@@ -405,6 +405,39 @@
                         <button onclick="hideUndoNotification()" class="px-2 py-1 hover:bg-white hover:bg-opacity-20 rounded">
                             <i class="fas fa-times"></i>
                         </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Add Pilot Modal -->
+            <div id="addPilotModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                <div class="bg-white rounded-lg shadow-xl max-w-md w-full fade-in">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800">Add New Pilot</h3>
+                                <p class="text-gray-600 mt-2">Enter the new pilot's details below.</p>
+                            </div>
+                            <button onclick="hideAddPilotModal()" class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="mt-6">
+                            <label for="addPilotName" class="block text-sm font-medium text-gray-700 mb-1">Pilot Name</label>
+                            <input type="text" id="addPilotName" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-levoBlue focus:border-levoBlue" placeholder="e.g. Jane Doe">
+                        </div>
+                        <div class="mt-4">
+                            <label for="addPilotId" class="block text-sm font-medium text-gray-700 mb-1">Pilot ID</label>
+                            <input type="text" id="addPilotId" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-levoBlue focus:border-levoBlue" placeholder="e.g. LV-2025">
+                        </div>
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <button onclick="hideAddPilotModal()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition">
+                                Cancel
+                            </button>
+                            <button onclick="addPilot()" class="px-4 py-2 bg-levoBlue text-white rounded-md hover:bg-blue-700 transition">
+                                Add Pilot
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -802,6 +835,43 @@
             }
         }
         
+        // Show Add Pilot modal
+        function showAddPilotModal() {
+            document.getElementById('addPilotName').value = '';
+            document.getElementById('addPilotId').value = '';
+            document.getElementById('addPilotModal').classList.remove('hidden');
+        }
+        // Hide Add Pilot modal
+        function hideAddPilotModal() {
+            document.getElementById('addPilotModal').classList.add('hidden');
+        }
+        // Add new pilot
+        function addPilot() {
+            const name = document.getElementById('addPilotName').value.trim();
+            const id = document.getElementById('addPilotId').value.trim();
+            if (!name || !id) {
+                alert('Please enter both name and ID.');
+                return;
+            }
+            // Check for duplicate ID
+            if (pilots.some(p => p.id === id)) {
+                alert('A pilot with this ID already exists.');
+                return;
+            }
+            pilots.push({
+                id: id,
+                name: name,
+                lateArrivals: 0,
+                maxLateArrivals: globalQuota,
+                status: 'good',
+                terminated: false
+            });
+            updateStats();
+            updatePilotsList();
+            hideAddPilotModal();
+            showSuccessNotification(`Pilot ${name} added.`);
+        }
+
         // Initialize the dashboard when the page loads
         window.onload = initDashboard;
     </script>
