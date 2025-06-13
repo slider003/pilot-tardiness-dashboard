@@ -1,0 +1,22 @@
+body {
+    font-family: sans-serif;
+    margin: 20px;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+nav ul li {
+    display: inline;
+    margin-right: 10px;
+}
+
+.error {
+    color: red;
+}
+
+.success {
+    color: green;
+}

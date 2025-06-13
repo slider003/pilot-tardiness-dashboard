@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<h2>Admin Dashboard</h2>
+<p>Welcome to the Admin Dashboard!</p>
+
+<h3>User Management</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Current Role</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user_item in users %}
+        <tr>
+            <td>{{ user_item.username }}</td>
+            <td>{{ user_item.role }}</td>
+            <td>
+                {% if user_item.username != current_user.username %} {# Admins cannot change their own role via this UI #}
+                    {% if user_item.role != 'admin' %}
+                        <a href="{{ url_for('assign_role', username=user_item.username, role='admin') }}">Make Admin</a>
+                    {% endif %}
+                    {% if user_item.role != 'pilot' %}
+                        <a href="{{ url_for('assign_role', username=user_item.username, role='pilot') }}">Make Pilot</a>
+                    {% endif %}
+                {% else %}
+                    (You)
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
